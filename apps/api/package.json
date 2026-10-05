@@ -16,6 +16,7 @@
     "test:mock-bse": "tsx src/scripts/test-mock-bse-client.ts",
     "test:trade-persistence": "tsx src/scripts/test-trade-persistence.ts",
     "worker": "tsx src/workers/trade-pull.worker.ts",
+    "schedule": "tsx src/schedulers/start-trade-pull-scheduler.ts",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
     "contract:emit": "prisma contract emit"
