@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Trade {
+  id        String   @id @default(cuid())
+  tradeId   String   @unique
+  client    String
+  symbol    String
+  quantity  Int
+  price     Decimal  @db.Decimal(18, 4)
+  timestamp DateTime
+  createdAt DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([symbol])
+  @@index([client])
+}
