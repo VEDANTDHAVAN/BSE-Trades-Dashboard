@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 
 import healthRouter from "./routes/health.routes.js";
+import mockBseRouter from "./mock-bse/mock-bse.routes.js";
 
 export const app = express();
 
@@ -11,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(healthRouter);
+app.use(mockBseRouter);
 
 app.use((_req, res) => {
   res.status(404).json({
