@@ -5,5 +5,9 @@
   "scripts": {
     "seed": "pnpm --dir apps/api seed"
   },
-  "packageManager": "pnpm@10.33.2"
+  "packageManager": "pnpm@10.33.2",
+  "dependencies": {
+    "bullmq": "^6.3.11",
+    "ioredis": "^6.0.0"
+  }
 }

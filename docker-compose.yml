@@ -11,6 +11,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data_phase2:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    container_name: bse-trades-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes    
 
 volumes:
   postgres_data_phase2:
+  redis_data:
