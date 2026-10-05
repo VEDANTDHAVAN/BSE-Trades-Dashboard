@@ -2,5 +2,8 @@
   "name": "bse-trades-dashboard",
   "private": true,
   "version": "1.0.0",
+  "scripts": {
+    "seed": "pnpm --dir apps/api seed"
+  },
   "packageManager": "pnpm@10.33.2"
 }
