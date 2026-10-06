@@ -2,6 +2,7 @@ import { Worker } from "bullmq";
 import redis from "../lib/redis";
 import { fetchMockBseTrades } from "../clients/mock-bse.client";
 import { persistTrades } from "../services/trade-persistence.service";
+import { publishTradeCreated } from "../realtime/trade-events.publisher";
 
 const worker = new Worker(
   "trade-pull",
@@ -17,6 +18,10 @@ const worker = new Worker(
     const trades = await fetchMockBseTrades(limit);
 
     const result = await persistTrades(trades);
+
+    for (const trade of result.insertedTrades) {
+      await publishTradeCreated(trade);
+    }
 
     const durationMs = Date.now() - startedAt;
 
