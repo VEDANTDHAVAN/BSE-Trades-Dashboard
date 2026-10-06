@@ -5,6 +5,7 @@ import helmet from "helmet";
 import healthRouter from "./routes/health.routes.js";
 import mockBseRouter from "./mock-bse/mock-bse.routes.js";
 import tradePullRoutes from "./routes/trade-pull.routes.js";
+import tradesRouter from "./routes/trades.routes.js";
 
 export const app = express();
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(healthRouter);
 app.use(mockBseRouter);
 app.use("/api/trades", tradePullRoutes);
+app.use("/api/trades", tradesRouter);
 
 app.use((_req, res) => {
   res.status(404).json({

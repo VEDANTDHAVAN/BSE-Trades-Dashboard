@@ -18,7 +18,9 @@
     "worker": "tsx src/workers/trade-pull.worker.ts",
     "schedule": "tsx src/schedulers/start-trade-pull-scheduler.ts",
     "test:socket": "tsx src/scripts/test-socket.ts",
+    "test:realtime-e2e": "tsx src/scripts/test-realtime-e2e.ts",
     "test:trade-event": "tsx src/scripts/test-trade-event.ts",
+    "verify:dashboard": "tsx src/scripts/verify-trades-dashboard.ts",
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate",
     "contract:emit": "prisma contract emit"

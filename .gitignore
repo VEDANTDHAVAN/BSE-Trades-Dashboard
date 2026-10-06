@@ -5,3 +5,5 @@ dist
 .claude
 .cursor
 .devin
+*.log
+.tmp-scan.cjs

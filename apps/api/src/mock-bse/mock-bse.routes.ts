@@ -1,7 +1,8 @@
 import { Router } from "express";
 
 import { config } from "../config.js";
-import { generateMockTrades } from "./trade-generator.js";
+import { generateMockTrades, setMockTradeSequence } from "./trade-generator.js";
+import { prisma } from "../lib/prisma.js";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -16,6 +17,27 @@ function parseLimit(rawLimit: unknown): number | null {
 
 const router = Router();
 
+let sequenceSeeded = false;
+
+async function seedMockTradeSequence(): Promise<void> {
+  if (sequenceSeeded) return;
+
+  const latest = await prisma.trade.findFirst({
+    where: { tradeId: { startsWith: "BSE-MOCK-" } },
+    select: { tradeId: true },
+    orderBy: { tradeId: "desc" },
+  });
+
+  if (latest) {
+    const match = /^BSE-MOCK-(\d+)$/.exec(latest.tradeId);
+    if (match) {
+      setMockTradeSequence(Number(match[1]));
+    }
+  }
+
+  sequenceSeeded = true;
+}
+
 router.get("/mock-bse/getTrades", async (req, res) => {
   const limit = parseLimit(req.query.limit);
   if (limit === null) {
@@ -24,6 +46,7 @@ router.get("/mock-bse/getTrades", async (req, res) => {
   }
 
   try {
+    await seedMockTradeSequence();
     await new Promise<void>((resolve) => setTimeout(resolve, config.mockBse.delayMs));
     const trades = generateMockTrades(limit);
     res.status(200).json({ trades, count: trades.length });

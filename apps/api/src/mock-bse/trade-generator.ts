@@ -27,6 +27,14 @@ export type MockTrade = {
 
 let sequence = 0;
 
+/**
+ * Resumes the trade-id sequence from a persisted high-water mark so ids stay
+ * unique across API restarts (the module-level counter otherwise resets to 0).
+ */
+export function setMockTradeSequence(value: number): void {
+  sequence = value;
+}
+
 export function generateMockTrades(limit: number): MockTrade[] {
   const generatedAt = Date.now();
 
