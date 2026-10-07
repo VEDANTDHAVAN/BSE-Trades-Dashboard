@@ -1,3 +1,5 @@
+import { config } from "../config.js";
+
 export interface MockBseTrade {
   tradeId: string;
   client: string;
@@ -19,9 +21,9 @@ export async function fetchMockBseTrades(
     process.env.MOCK_BSE_URL ??
     "http://localhost:4000/mock-bse/getTrades";
 
-  const timeoutMs = Number(
-    process.env.MOCK_BSE_TIMEOUT_MS ?? 30000,
-  );
+  // Defaults to 16 minutes so a maximum-length (15-minute) pull never aborts.
+  // This is the worker's own server-side connection, not a browser request.
+  const timeoutMs = config.mockBse.timeoutMs;
 
   const url = new URL(baseUrl);
   url.searchParams.set("limit", String(limit));

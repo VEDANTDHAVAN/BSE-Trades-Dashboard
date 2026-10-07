@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   fetchTrades,
   fetchTradeSummary,
+  type PullCompletedPayload,
   type TradesSummaryResponse,
   type TradesResponse,
 } from "../lib/api";
@@ -10,7 +11,6 @@ import type { TradeCreatedPayload } from "./useSockets";
 
 /** Newest live trades are prepended while page 1 is showing, capped at this many rows. */
 const MAX_LIVE_ROWS = 100;
-const SUMMARY_POLL_MS = 15000;
 
 export interface TradesFilters {
   page: number;
@@ -54,6 +54,10 @@ export function useTrades(filters: TradesFilters) {
   const [summary, setSummary] = useState<TradesSummaryResponse | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [liveCount, setLiveCount] = useState(0);
+  const [lastPull, setLastPull] = useState<PullCompletedPayload | null>(null);
+  const [liveTradeIds, setLiveTradeIds] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -95,36 +99,31 @@ export function useTrades(filters: TradesFilters) {
     return () => controller.abort();
   }, [filters.page, filters.pageSize, filters.symbol, filters.client]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const controller = new AbortController();
-
-    const load = async () => {
-      try {
-        const response = await fetchTradeSummary(controller.signal);
-        if (cancelled) return;
-        setSummary(response);
-        setSummaryError(null);
-      } catch (error) {
-        if (cancelled) return;
-        setSummaryError(
-          error instanceof Error ? error.message : "Failed to load summary",
-        );
-      }
-    };
-
-    void load();
-    const timer = setInterval(() => void load(), SUMMARY_POLL_MS);
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-      clearInterval(timer);
-    };
+  const refreshSummary = useCallback(async () => {
+    try {
+      const response = await fetchTradeSummary();
+      setSummary(response);
+      setSummaryError(null);
+    } catch (error) {
+      setSummaryError(
+        error instanceof Error ? error.message : "Failed to load summary",
+      );
+    }
   }, []);
+
+  // Load the summary once on mount; it is refreshed by pull:completed events,
+  // not by a polling timer.
+  useEffect(() => {
+    void refreshSummary();
+  }, [refreshSummary]);
 
   const handleTradeCreated = useCallback((trade: TradeCreatedPayload) => {
     setLiveCount((current) => current + 1);
+    setLiveTradeIds((current) => {
+      const next = new Set(current);
+      next.add(trade.tradeId);
+      return next;
+    });
 
     const incoming = toApiTrade(trade);
 
@@ -143,11 +142,23 @@ export function useTrades(filters: TradesFilters) {
     });
   }, []);
 
+  const handlePullCompleted = useCallback(
+    (payload: PullCompletedPayload) => {
+      setLastPull(payload);
+      void refreshSummary();
+    },
+    [refreshSummary],
+  );
+
   return {
     ...state,
     summary,
     summaryError,
     liveCount,
+    lastPull,
+    liveTradeIds,
+    refreshSummary,
     handleTradeCreated,
+    handlePullCompleted,
   };
 }

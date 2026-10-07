@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { socket } from "../lib/socket";
+import type { PullCompletedPayload } from "../lib/api";
 
 export interface TradeCreatedPayload {
   tradeId: string;
@@ -12,13 +13,13 @@ export interface TradeCreatedPayload {
 
 export function useSocket(
   onTradeCreated?: (trade: TradeCreatedPayload) => void,
+  onPullCompleted?: (payload: PullCompletedPayload) => void,
 ) {
   const [connected, setConnected] = useState(socket.connected);
 
   useEffect(() => {
     function handleConnect() {
       setConnected(true);
-      console.log("[socket] connected", socket.id);
     }
 
     function handleDisconnect(reason: string) {
@@ -31,14 +32,18 @@ export function useSocket(
     }
 
     function handleTradeCreated(trade: TradeCreatedPayload) {
-      console.log("[socket] trade:created", trade);
       onTradeCreated?.(trade);
+    }
+
+    function handlePullCompleted(payload: PullCompletedPayload) {
+      onPullCompleted?.(payload);
     }
 
     socket.on("connect", handleConnect);
     socket.on("disconnect", handleDisconnect);
     socket.on("connect_error", handleConnectError);
     socket.on("trade:created", handleTradeCreated);
+    socket.on("pull:completed", handlePullCompleted);
 
     socket.connect();
 
@@ -47,10 +52,11 @@ export function useSocket(
       socket.off("disconnect", handleDisconnect);
       socket.off("connect_error", handleConnectError);
       socket.off("trade:created", handleTradeCreated);
+      socket.off("pull:completed", handlePullCompleted);
 
       socket.disconnect();
     };
-  }, [onTradeCreated]);
+  }, [onTradeCreated, onPullCompleted]);
 
   return {
     connected,

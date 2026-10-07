@@ -43,6 +43,15 @@ export interface PullStatus {
   failed: number;
 }
 
+export interface PullCompletedPayload {
+  jobId: string | null;
+  received: number;
+  inserted: number;
+  duplicates: number;
+  durationMs: number;
+  completedAt: string;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000";
 
 async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
@@ -80,11 +89,25 @@ export function fetchTradeSummary(signal?: AbortSignal): Promise<TradesSummaryRe
   return getJson<TradesSummaryResponse>("/api/trades/summary", signal);
 }
 
+export function fetchSymbols(signal?: AbortSignal): Promise<string[]> {
+  return getJson<{ symbols: string[] }>("/api/trades/symbols", signal).then(
+    (response) => response.symbols,
+  );
+}
+
 export function fetchPullStatus(signal?: AbortSignal): Promise<PullStatus> {
   return getJson<PullStatus>("/api/trades/pull/status", signal);
 }
 
-export async function requestTradePull(limit: number): Promise<void> {
+export interface PullRequestResponse {
+  status: string;
+  jobId: string;
+  limit: number;
+}
+
+export async function requestTradePull(
+  limit: number,
+): Promise<PullRequestResponse> {
   const response = await fetch(`${API_BASE_URL}/api/trades/pull`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -94,4 +117,6 @@ export async function requestTradePull(limit: number): Promise<void> {
   if (!response.ok) {
     throw new Error(`Trade pull request failed with HTTP ${response.status}`);
   }
+
+  return (await response.json()) as PullRequestResponse;
 }

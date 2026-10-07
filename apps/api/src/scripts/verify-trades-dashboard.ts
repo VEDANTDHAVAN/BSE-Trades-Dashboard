@@ -1,7 +1,10 @@
 import { io } from "socket.io-client";
+import { config } from "../config.js";
 
-const API_URL = "http://localhost:4000";
+const API_URL = `http://localhost:${config.port}`;
 const LIMIT = 3;
+/** A pull cannot emit events before the mock BSE responds. */
+const EVENT_BUDGET_MS = config.mockBse.delayMs + 30_000;
 
 interface Trade {
   tradeId: string;
@@ -184,7 +187,7 @@ async function main() {
   const ingested = await new Promise<string[]>((resolve, reject) => {
     const timer = setTimeout(
       () => reject(new Error(`only ${received.length}/${LIMIT} trade:created events arrived`)),
-      30_000,
+      EVENT_BUDGET_MS,
     );
 
     socket.on("trade:created", (trade) => {

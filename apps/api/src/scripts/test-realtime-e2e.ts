@@ -1,7 +1,10 @@
 import { io } from "socket.io-client";
+import { config } from "../config.js";
 
-const API_URL = "http://localhost:4000";
+const API_URL = `http://localhost:${config.port}`;
 const LIMIT = 5;
+/** A pull cannot emit events before the mock BSE responds. */
+const EVENT_BUDGET_MS = config.mockBse.delayMs + 30_000;
 
 const socket = io(API_URL, { transports: ["websocket"] });
 
@@ -70,4 +73,4 @@ setTimeout(() => {
     false,
     `timeout: only ${received.length}/${LIMIT} trade:created events received (jobId=${pullJobId})`,
   );
-}, 30_000);
+}, EVENT_BUDGET_MS);

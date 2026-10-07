@@ -41,6 +41,12 @@ export async function startTradeEventsSubscriber(
         console.log("[trade-events] emitting trade:created");
 
         io.emit("trade:created", event.payload);
+      } else if (event.type === "pull:completed") {
+        const io = getSocketServer();
+
+        console.log("[trade-events] emitting pull:completed");
+
+        io.emit("pull:completed", event.payload);
       }
     } catch (error) {
       console.error(

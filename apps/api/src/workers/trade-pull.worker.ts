@@ -2,7 +2,10 @@ import { Worker } from "bullmq";
 import redis from "../lib/redis";
 import { fetchMockBseTrades } from "../clients/mock-bse.client";
 import { persistTrades } from "../services/trade-persistence.service";
-import { publishTradeCreated } from "../realtime/trade-events.publisher";
+import {
+  publishPullCompleted,
+  publishTradeCreated,
+} from "../realtime/trade-events.publisher";
 
 const worker = new Worker(
   "trade-pull",
@@ -22,9 +25,9 @@ const worker = new Worker(
     for (const trade of result.insertedTrades) {
       await publishTradeCreated(trade);
     }
-
+    
     const durationMs = Date.now() - startedAt;
-
+    
     console.log(
       `[trade-pull] job=${job.id} completed ` +
         `received=${result.received} ` +
@@ -32,7 +35,16 @@ const worker = new Worker(
         `duplicates=${result.duplicates} ` +
         `durationMs=${durationMs}`,
     );
-
+    
+    await publishPullCompleted({
+      jobId: job.id ?? null,
+      received: result.received,
+      inserted: result.inserted,
+      duplicates: result.duplicates,
+      durationMs,
+      completedAt: new Date().toISOString(),
+    });
+    
     return {
       ...result,
       durationMs,
